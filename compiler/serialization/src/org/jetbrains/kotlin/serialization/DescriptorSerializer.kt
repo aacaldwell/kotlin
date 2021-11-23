@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.extensions.TypeAttributeTranslatorExtension
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement
@@ -869,7 +870,7 @@ class DescriptorSerializer private constructor(
             else
                 createTopLevel(extension)
             val plugins = project?.let { DescriptorSerializerPlugin.getInstances(it) }.orEmpty()
-            val typeAttributeTranslators = project?.let { TypeAttributeTranslators(project) }
+            val typeAttributeTranslators = project?.let { TypeAttributeTranslatorExtension.createTranslators(it) }
 
             // Calculate type parameter ids for the outer class beforehand, as it would've had happened if we were always
             // serializing outer classes before nested classes.
