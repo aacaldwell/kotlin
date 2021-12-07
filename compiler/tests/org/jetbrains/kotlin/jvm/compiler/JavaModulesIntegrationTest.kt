@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.jvm.compiler
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.AbstractCliTest
 import org.jetbrains.kotlin.cli.AbstractCliTest.getNormalizedCompilerOutput
-import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.util.KtTestUtil
@@ -16,7 +15,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.jar.Manifest
 
-abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractKotlinCompilerIntegrationTest() {
+abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private val jdkHome: File) :
+    AbstractKotlinCompilerIntegrationTest() {
     override val testDataPath: String
         get() = "compiler/testData/javaModules/"
 
@@ -58,16 +58,21 @@ abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractK
         )
     }
 
-    protected fun checkKotlinOutput(moduleName: String): (String) -> Unit = { actual ->
-        KotlinTestUtils.assertEqualsToFile(
-            File(testDataDirectory, "$moduleName.txt"),
-            getNormalizedCompilerOutput(actual, null, testDataPath).replace(System.getenv("JDK_11"), "\$JDK11")
-        )
+    private fun checkKotlinOutput(moduleName: String): (String) -> Unit {
+        val expectedFile =
+            File(testDataDirectory, "$moduleName.$jdkVersion.txt").takeIf { it.exists() } ?: File(testDataDirectory, "$moduleName.txt")
+        return { actual ->
+            KotlinTestUtils.assertEqualsToFile(
+                expectedFile,
+                getNormalizedCompilerOutput(actual, null, testDataPath).replace(System.getenv("JDK_11"), "\$JDK11")
+                    .replace(System.getenv("JDK_17"), "\$JDK17")
+            )
+        }
     }
 
     protected data class ModuleRunResult(val stdout: String, val stderr: String)
 
-    protected fun runModule(className: String, modulePath: List<File>): ModuleRunResult {
+    private fun runModule(className: String, modulePath: List<File>): ModuleRunResult {
         val command = listOf(
             File(KtTestUtil.getJdk11Home(), "bin/java").path,
             "-p", (modulePath + ForTestCompileRuntime.runtimeJarForTests()).joinToString(File.pathSeparator, transform = File::getPath),
@@ -82,13 +87,13 @@ abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractK
         )
     }
 
-    protected fun createMultiReleaseJar(jdk9Home: File, destination: File, mainRoot: File, java9Root: File): File {
+    private fun createMultiReleaseJar(jdk9Home: File, destination: File, mainRoot: File, java9Root: File): File {
         val command = listOf<String>(
-                File(jdk9Home, "bin/jar").path,
-                "--create", "--file=$destination",
-                "-C", mainRoot.path, ".",
-                "--release", "9",
-                "-C", java9Root.path, "."
+            File(jdk9Home, "bin/jar").path,
+            "--create", "--file=$destination",
+            "-C", mainRoot.path, ".",
+            "--release", "9",
+            "-C", java9Root.path, "."
         )
 
         val process = ProcessBuilder().command(command).inheritIO().start()
@@ -128,8 +133,7 @@ abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractK
     fun testAllModulePathAndNamedModule() {
         try {
             module("main", addModules = listOf("ALL-MODULE-PATH"))
-        }
-        catch (e: JavaCompilationError) {
+        } catch (e: JavaCompilationError) {
             // Java compilation should fail, it's expected
         }
     }
@@ -150,7 +154,9 @@ abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractK
 
     fun testReleaseFlagWrongValue() {
         module("module5", additionalKotlinArguments = listOf("-Xjdk-release=5"))
-        module("module12", additionalKotlinArguments = listOf("-Xjdk-release=12"))
+        if (jdkVersion == 11) {
+            module("module12", additionalKotlinArguments = listOf("-Xjdk-release=12"))
+        }
     }
 
     fun testReleaseFlag() {
@@ -196,10 +202,10 @@ abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractK
             "-Xmodule-path=${a.path}"
         )
         compileLibrary(
-                "moduleB",
-                additionalOptions = kotlinOptions,
-                compileJava = { _, _, _ -> error("No .java files in moduleB in this test") },
-                checkKotlinOutput = checkKotlinOutput("moduleB")
+            "moduleB",
+            additionalOptions = kotlinOptions,
+            compileJava = { _, _, _ -> error("No .java files in moduleB in this test") },
+            checkKotlinOutput = checkKotlinOutput("moduleB")
         )
     }
 
