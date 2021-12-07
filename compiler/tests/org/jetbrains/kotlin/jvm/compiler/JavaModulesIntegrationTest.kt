@@ -16,7 +16,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.jar.Manifest
 
-class Java11ModulesIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
+abstract class JavaModulesIntegrationTest(private val jdkHome: File) : AbstractKotlinCompilerIntegrationTest() {
     override val testDataPath: String
         get() = "compiler/testData/javaModules/"
 
@@ -31,7 +31,7 @@ class Java11ModulesIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
         val paths = (modulePath + ForTestCompileRuntime.runtimeJarForTests()).joinToString(separator = File.pathSeparator) { it.path }
 
         val kotlinOptions = mutableListOf(
-            "-jdk-home", KtTestUtil.getJdk11Home().path,
+            "-jdk-home", jdkHome.path,
             "-Xmodule-path=$paths"
         )
         if (addModules.isNotEmpty()) {
@@ -58,16 +58,16 @@ class Java11ModulesIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
         )
     }
 
-    private fun checkKotlinOutput(moduleName: String): (String) -> Unit = { actual ->
+    protected fun checkKotlinOutput(moduleName: String): (String) -> Unit = { actual ->
         KotlinTestUtils.assertEqualsToFile(
             File(testDataDirectory, "$moduleName.txt"),
             getNormalizedCompilerOutput(actual, null, testDataPath).replace(System.getenv("JDK_11"), "\$JDK11")
         )
     }
 
-    private data class ModuleRunResult(val stdout: String, val stderr: String)
+    protected data class ModuleRunResult(val stdout: String, val stderr: String)
 
-    private fun runModule(className: String, modulePath: List<File>): ModuleRunResult {
+    protected fun runModule(className: String, modulePath: List<File>): ModuleRunResult {
         val command = listOf(
             File(KtTestUtil.getJdk11Home(), "bin/java").path,
             "-p", (modulePath + ForTestCompileRuntime.runtimeJarForTests()).joinToString(File.pathSeparator, transform = File::getPath),
@@ -82,7 +82,7 @@ class Java11ModulesIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
         )
     }
 
-    private fun createMultiReleaseJar(jdk9Home: File, destination: File, mainRoot: File, java9Root: File): File {
+    protected fun createMultiReleaseJar(jdk9Home: File, destination: File, mainRoot: File, java9Root: File): File {
         val command = listOf<String>(
                 File(jdk9Home, "bin/jar").path,
                 "--create", "--file=$destination",
