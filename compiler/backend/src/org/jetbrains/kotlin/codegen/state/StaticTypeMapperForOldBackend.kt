@@ -51,4 +51,7 @@ object StaticTypeMapperForOldBackend : KotlinTypeMapperBase() {
     override fun mapTypeCommon(type: KotlinTypeMarker, mode: TypeMappingMode): Type {
         return mapType(type as KotlinType, AsmTypeFactory, mode, staticTypeMappingConfiguration, null)
     }
+
+    override fun mapKotlinType(type: KotlinType, mode: TypeMappingMode): Type =
+        mapTypeCommon(type, mode)
 }

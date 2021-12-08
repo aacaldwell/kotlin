@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.isPublishedApi
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.DEFAULT_CONSTRUCTOR_MARKER
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.OBJECT_TYPE
 import org.jetbrains.kotlin.resolve.jvm.JAVA_LANG_RECORD_FQ_NAME
@@ -262,6 +261,9 @@ class KotlinTypeMapper @JvmOverloads constructor(
     fun mapType(descriptor: ClassifierDescriptor): Type {
         return mapType(descriptor.defaultType)
     }
+
+    override fun mapKotlinType(type: KotlinType, mode: TypeMappingMode): Type =
+        mapType(type, null, mode)
 
     @JvmOverloads
     fun mapType(

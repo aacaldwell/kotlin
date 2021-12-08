@@ -332,6 +332,13 @@ class GenerationState private constructor(
 
     val globalSerializationBindings = JvmSerializationBindings()
     var mapInlineClass: (ClassDescriptor) -> Type = { descriptor -> typeMapper.mapType(descriptor.defaultType) }
+    var typeMapperBase: KotlinTypeMapperBase = typeMapper
+        get() {
+            if (isIrBackend == field is KotlinTypeMapper) {
+                error("Incorrect typeMapperBase for JVM backend.\nisIrBackend=$isIrBackend\ntypeMapperBase=$field")
+            }
+            return field
+        }
 
     val typeApproximator: TypeApproximator? =
         if (languageVersionSettings.supportsFeature(LanguageFeature.NewInference))

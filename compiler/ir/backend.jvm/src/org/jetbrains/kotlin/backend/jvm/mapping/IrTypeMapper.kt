@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.types.AbstractTypeMapper
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeMappingContext
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContextForTypeMapping
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
@@ -56,6 +57,12 @@ class IrTypeMapper(private val context: JvmBackendContext) : KotlinTypeMapperBas
 
     override fun mapTypeCommon(type: KotlinTypeMarker, mode: TypeMappingMode): Type =
         mapType(type as IrType, mode)
+
+    override fun mapKotlinType(type: KotlinType, mode: TypeMappingMode): Type {
+        // Can be null in case of FIR.
+        val typeTranslator = context.typeTranslator ?: throw UnsupportedOperationException()
+        return mapType(typeTranslator.translateType(type), mode)
+    }
 
     private fun computeClassInternalName(irClass: IrClass): StringBuilder {
         context.getLocalClassType(irClass)?.internalName?.let {

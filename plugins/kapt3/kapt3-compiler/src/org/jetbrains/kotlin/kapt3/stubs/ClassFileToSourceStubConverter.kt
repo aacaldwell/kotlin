@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.base.kapt3.KaptFlag
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_PARAMETER_NAME
+import org.jetbrains.kotlin.codegen.state.KotlinTypeMapperBase
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -56,10 +57,7 @@ import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedValueArgument
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassOrAny
-import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -123,8 +121,8 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
     val bindings: Map<String, KaptJavaFileObject>
         get() = mutableBindings
 
-    private val typeMapper
-        get() = kaptContext.generationState.typeMapper
+    private val typeMapper: KotlinTypeMapperBase
+        get() = kaptContext.typeMapper
 
     val treeMaker = TreeMaker.instance(kaptContext.context) as KaptTreeMaker
 
@@ -510,7 +508,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         val declaration = kaptContext.origins[clazz]?.element as? KtClassOrObject ?: return defaultSuperTypes
         val declarationDescriptor = kaptContext.bindingContext[BindingContext.CLASS, declaration] ?: return defaultSuperTypes
 
-        if (typeMapper.mapType(declarationDescriptor) != Type.getObjectType(clazz.name)) {
+        if (typeMapper.mapClass(declarationDescriptor) != Type.getObjectType(clazz.name)) {
             return defaultSuperTypes
         }
 
@@ -823,7 +821,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
             is ULongValue -> value.value
             is AnnotationValue -> {
                 val annotationDescriptor = value.value
-                val annotationNode = AnnotationNode(typeMapper.mapType(annotationDescriptor.type).descriptor)
+                val annotationNode = AnnotationNode(typeMapper.mapKotlinType(annotationDescriptor.type).descriptor)
                 val values = ArrayList<Any?>(annotationDescriptor.allValueArguments.size * 2)
                 for ((name, arg) in annotationDescriptor.allValueArguments) {
                     val mapped = mapConstantValueToAsmRepresentation(arg)
@@ -962,7 +960,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
 
             val superClassConstructorCall = if (superClassConstructor != null) {
                 val args = mapJList(superClassConstructor.valueParameters) { param ->
-                    convertLiteralExpression(containingClass, getDefaultValue(typeMapper.mapType(param.type)))
+                    convertLiteralExpression(containingClass, getDefaultValue(typeMapper.mapKotlinType(param.type)))
                 }
                 val call = treeMaker.Apply(JavacList.nil(), treeMaker.SimpleName("super"), args)
                 JavacList.of<JCStatement>(treeMaker.Exec(call))
@@ -1401,10 +1399,10 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
                         && asm.size == desc.value.size
                         && asm.zip(desc.value).all { (eAsm, eDesc) -> checkIfAnnotationValueMatches(eAsm, eDesc) }
             }
-            is Type -> desc is KClassValue && typeMapper.mapType(desc.getArgumentType(kaptContext.generationState.module)) == asm
+            is Type -> desc is KClassValue && typeMapper.mapKotlinType(desc.getArgumentType(kaptContext.generationState.module)) == asm
             is AnnotationNode -> {
                 val annotationDescriptor = (desc as? AnnotationValue)?.value ?: return false
-                if (typeMapper.mapType(annotationDescriptor.type).descriptor != asm.desc) return false
+                if (typeMapper.mapKotlinType(annotationDescriptor.type).descriptor != asm.desc) return false
                 val asmAnnotationArgs = pairedListToMap(asm.values)
                 if (annotationDescriptor.allValueArguments.size != asmAnnotationArgs.size) return false
 
@@ -1494,7 +1492,8 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         }
     }
 
-    private fun convertKotlinType(type: KotlinType): Type = typeMapper.mapType(type, null, TypeMappingMode.GENERIC_ARGUMENT)
+    private fun convertKotlinType(type: KotlinType): Type =
+        typeMapper.mapKotlinType(type, TypeMappingMode.GENERIC_ARGUMENT)
 
     private fun getFileForClass(c: ClassNode): KtFile? = kaptContext.origins[c]?.element?.containingFile as? KtFile
 

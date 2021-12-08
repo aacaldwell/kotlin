@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.TypeTranslator
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
@@ -46,6 +47,7 @@ class JvmBackendContext(
     val generatorExtensions: JvmGeneratorExtensions,
     val backendExtension: JvmBackendExtension,
     val irSerializer: JvmIrSerializer?,
+    val typeTranslator: TypeTranslator?,
 ) : CommonBackendContext {
     // If the JVM fqname of a class differs from what is implied by its parent, e.g. if it's a file class
     // annotated with @JvmPackageName, the correct name is recorded here.
@@ -141,6 +143,7 @@ class JvmBackendContext(
         state.mapInlineClass = { descriptor ->
             typeMapper.mapType(referenceClass(descriptor).defaultType)
         }
+        state.typeMapperBase = typeMapper
     }
 
     internal fun referenceClass(descriptor: ClassDescriptor): IrClassSymbol =

@@ -63,7 +63,8 @@ open class JvmIrCodegenFactory(
         val irProviders: List<IrProvider>,
         val extensions: JvmGeneratorExtensionsImpl,
         val backendExtension: JvmBackendExtension,
-        val notifyCodegenStart: () -> Unit
+        val typeTranslator: TypeTranslator?,
+        val notifyCodegenStart: () -> Unit,
     ) : CodegenFactory.BackendInput
 
     private data class JvmIrCodegenInput(
@@ -195,6 +196,7 @@ open class JvmIrCodegenFactory(
             irProviders,
             jvmGeneratorExtensions,
             JvmBackendExtension.Default,
+            psi2irContext.typeTranslator,
         ) {}
     }
 
@@ -224,7 +226,8 @@ open class JvmIrCodegenFactory(
     }
 
     override fun invokeLowerings(state: GenerationState, input: CodegenFactory.BackendInput): CodegenFactory.CodegenInput {
-        val (irModuleFragment, symbolTable, customPhaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart) =
+        val (irModuleFragment, symbolTable, customPhaseConfig, irProviders, extensions, backendExtension, typeTranslator,
+            notifyCodegenStart) =
             input as JvmIrBackendInput
         val irSerializer = if (
             state.configuration.get(JVMConfigurationKeys.SERIALIZE_IR, JvmSerializeIrMode.NONE) != JvmSerializeIrMode.NONE
@@ -235,6 +238,7 @@ open class JvmIrCodegenFactory(
         val phaseConfig = customPhaseConfig ?: PhaseConfig(phases)
         val context = JvmBackendContext(
             state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension, irSerializer,
+            typeTranslator
         )
         val intrinsics by lazy { IrIntrinsicMethods(irModuleFragment.irBuiltins, context.ir.symbols) }
         context.getIntrinsic = { symbol: IrFunctionSymbol -> intrinsics.getIntrinsic(symbol) }
@@ -274,6 +278,8 @@ open class JvmIrCodegenFactory(
             state,
             JvmIrBackendInput(
                 irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension,
+                // TODO: support kapt in FIR
+                null,
                 notifyCodegenStart
             )
         )

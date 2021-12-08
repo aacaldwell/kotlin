@@ -21,6 +21,7 @@ import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.util.Context
 import org.jetbrains.kotlin.base.kapt3.KaptOptions
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.codegen.state.KotlinTypeMapperBase
 import org.jetbrains.kotlin.kapt3.base.KaptContext
 import org.jetbrains.kotlin.kapt3.base.util.KaptLogger
 import org.jetbrains.kotlin.kapt3.javac.KaptTreeMaker
@@ -38,6 +39,9 @@ class KaptContextForStubGeneration(
     val origins: Map<Any, JvmDeclarationOrigin>,
     val generationState: GenerationState
 ) : KaptContext(options, withJdk, logger) {
+    val typeMapper: KotlinTypeMapperBase
+        get() = generationState.typeMapperBase
+
     private val treeMaker = TreeMaker.instance(context)
 
     override fun preregisterTreeMaker(context: Context) {
