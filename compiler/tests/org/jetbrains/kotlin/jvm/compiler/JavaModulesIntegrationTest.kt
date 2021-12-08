@@ -161,7 +161,11 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
 
     fun testReleaseFlag() {
         module("module")
+        module("module9", additionalKotlinArguments = listOf("-Xjdk-release=9"))
         module("module11", additionalKotlinArguments = listOf("-Xjdk-release=11"))
+        if (jdkVersion == 17) {
+            module("module17", additionalKotlinArguments = listOf("-Xjdk-release=17"))
+        }
         module("moduleSwing", additionalKotlinArguments = listOf("-Xjdk-release=9"))
     }
 
