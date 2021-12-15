@@ -102,6 +102,28 @@ public object Platform {
     public var isCleanersLeakCheckerActive: Boolean
         get() = Platform_getCleanersLeakChecker()
         set(value) = Platform_setCleanersLeakChecker(value)
+
+    /**
+     * Number of logical processors available for the current thread.
+     *
+     * Can be not equal to the number of processors in the system if some restrictions on processor usage were successfully detected.
+     * Some kinds of processor usage restrictions are not detected, for now, e.g., CPU quotas in containers.
+     *
+     * Value will be computed on each usage. It can change if some OS scheduler API restricts the process during runtime.
+     *
+     * If one considers the value to be inaccurate and wants another one to be used, it can be overridden by
+     * KOTLIN_NATIVE_AVAILABLE_PROCESSORS environment variable.  When the variable is set and contains a value that is not
+     * positive Int, IllegalStateException will be thrown.
+     */
+    @ExperimentalStdlibApi
+    public fun getAvailableProcessors() : Int {
+        val fromEnv = Platform_getAvailableProcessorsEnv()
+        if (fromEnv == null) {
+            return Platform_getAvailableProcessors()
+        }
+        return fromEnv.toIntOrNull()?.takeIf { it > 0 } ?:
+            throw IllegalStateException("Available processors has bad environment override: $fromEnv")
+    }
 }
 
 @GCUnsafeCall("Konan_Platform_canAccessUnaligned")
@@ -133,6 +155,13 @@ private external fun Platform_getCleanersLeakChecker(): Boolean
 
 @GCUnsafeCall("Konan_Platform_setCleanersLeakChecker")
 private external fun Platform_setCleanersLeakChecker(value: Boolean): Unit
+
+@GCUnsafeCall("Konan_Platform_getAvailableProcessorsEnv")
+private external fun Platform_getAvailableProcessorsEnv(): String?
+
+@GCUnsafeCall("Konan_Platform_getAvailableProcessors")
+private external fun Platform_getAvailableProcessors(): Int
+
 
 @TypedIntrinsic(IntrinsicType.IS_EXPERIMENTAL_MM)
 @ExperimentalStdlibApi

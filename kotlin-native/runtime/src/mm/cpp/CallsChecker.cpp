@@ -137,6 +137,10 @@ extern "C" const char* Kotlin_callsCheckerGoodFunctionNames[] = {
         "vsnprintf",
         "bcmp",
 
+        "getenv",
+        "setenv",
+        "unsetenv",
+
         "dispatch_once",
         "\x01_pthread_cond_init",
         "_pthread_cond_init",
