@@ -65,13 +65,7 @@ gc::GC::~GC() = default;
 
 // static
 size_t gc::GC::GetAllocatedHeapSize(ObjHeader* object) noexcept {
-    RuntimeAssert(object->heap(), "Object must be a heap object");
-    const auto* typeInfo = object->type_info();
-    if (typeInfo->IsArray()) {
-        return mm::ObjectFactory<gc::GCImpl>::ThreadQueue::ArrayAllocatedSize(typeInfo, object->array()->count_);
-    } else {
-        return mm::ObjectFactory<gc::GCImpl>::ThreadQueue::ObjectAllocatedSize(typeInfo);
-    }
+    return mm::ObjectFactory<GCImpl>::GetAllocatedHeapSize(object);
 }
 
 gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
