@@ -52,7 +52,7 @@ public:
         using Allocator = AllocatorWithGC<AlignedAllocator, ThreadData>;
 
         ThreadData(SameThreadMarkAndSweep& gc, mm::ThreadData& threadData, GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), threadData_(threadData), gcScheduler_(gcScheduler) {}
+            gc_(gc), gcScheduler_(gcScheduler) {}
         ~ThreadData() = default;
 
         void SafePointSlowPath(SafepointFlag flag) noexcept;
@@ -68,7 +68,6 @@ public:
     private:
 
         SameThreadMarkAndSweep& gc_;
-        mm::ThreadData& threadData_;
         GCSchedulerThreadData& gcScheduler_;
     };
 
