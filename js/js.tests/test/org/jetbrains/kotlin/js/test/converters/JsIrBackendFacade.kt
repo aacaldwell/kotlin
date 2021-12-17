@@ -105,8 +105,7 @@ class JsIrBackendFacade(
         }
 
         val debugMode = DebugMode.fromSystemProperty("kotlin.js.debugMode")
-        val phaseConfig = if (debugMode >= DebugMode.DEBUG) {
-            val allPhasesSet = if (debugMode >= DebugMode.SUPER_DEBUG) jsPhases.toPhaseMap().values.toSet() else emptySet()
+        val phaseConfig = if (debugMode >= DebugMode.SUPER_DEBUG) {
             val dumpOutputDir = File(
                 JsEnvironmentConfigurator.getJsArtifactsOutputDir(testServices),
                 JsEnvironmentConfigurator.getJsArtifactSimpleName(testServices, module.name) + "-irdump"
@@ -114,7 +113,7 @@ class JsIrBackendFacade(
             PhaseConfig(
                 jsPhases,
                 dumpToDirectory = dumpOutputDir.path,
-                toDumpStateAfter = allPhasesSet
+                toDumpStateAfter = jsPhases.toPhaseMap().values.toSet()
             )
         } else {
             PhaseConfig(jsPhases)
