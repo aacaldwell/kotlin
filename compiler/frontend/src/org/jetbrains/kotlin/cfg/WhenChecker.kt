@@ -18,6 +18,8 @@ package org.jetbrains.kotlin.cfg
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -357,7 +359,11 @@ object WhenChecker {
     fun containsNullCase(expression: KtWhenExpression, context: BindingContext) =
         WhenOnNullableExhaustivenessChecker.getMissingCases(expression, context, true).isEmpty()
 
-    fun checkDuplicatedLabels(expression: KtWhenExpression, trace: BindingTrace) {
+    fun checkDuplicatedLabels(
+        expression: KtWhenExpression,
+        trace: BindingTrace,
+        languageVersionSettings: LanguageVersionSettings,
+    ) {
         if (expression.subjectExpression == null) return
 
         val checkedTypes = HashSet<Pair<KotlinType, Boolean>>()
@@ -407,7 +413,7 @@ object WhenChecker {
                             }
                             false -> {
                                 // already found bad constant in previous branches
-                                val isGood = constant.isGoodForDuplicateLabel()
+                                val isGood = constant.isGoodForDuplicateLabel(constantExpression, languageVersionSettings)
                                 if (isGood) {
                                     // this constant is good -> report on first bad constant
                                     val reportOn = badBranches.remove(constant)!!
@@ -420,7 +426,7 @@ object WhenChecker {
                             }
                             null -> {
                                 // met constant for a first time
-                                val isGood = constant.isGoodForDuplicateLabel()
+                                val isGood = constant.isGoodForDuplicateLabel(constantExpression, languageVersionSettings)
                                 checkedConstants[constant] = isGood
                                 if (!isGood) {
                                     badBranches[constant] = constantExpression
@@ -446,8 +452,15 @@ object WhenChecker {
         }
     }
 
-    private fun CompileTimeConstant<*>.isGoodForDuplicateLabel(): Boolean {
-        return !usesVariableAsConstant
+    private fun CompileTimeConstant<*>.isGoodForDuplicateLabel(
+        expression: KtExpression,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        if (usesVariableAsConstant) return false
+        if (!languageVersionSettings.supportsFeature(LanguageFeature.ProhibitSimplificationOfNonTrivialConstBooleanExpressions)) {
+            return !ConstantExpressionEvaluator.isComplexBooleanConstant(expression, this)
+        }
+        return true
     }
 
     fun checkDeprecatedWhenSyntax(trace: BindingTrace, expression: KtWhenExpression) {
