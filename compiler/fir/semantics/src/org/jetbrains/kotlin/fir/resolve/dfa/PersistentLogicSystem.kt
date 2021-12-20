@@ -316,7 +316,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
     override fun removeTypeStatementsAboutVariable(flow: PersistentFlow, variable: RealVariable) {
         flow.approvedTypeStatements -= variable
         flow.approvedTypeStatementsDiff -= variable
-        variable.dependentVariables.forEach {
+        variable.forEachTransitiveDependentVariable {
             flow.approvedTypeStatements -= it
             flow.approvedTypeStatementsDiff -= it
         }
@@ -324,8 +324,8 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
 
     override fun removeLogicStatementsAboutVariable(flow: PersistentFlow, variable: DataFlowVariable) {
         flow.logicStatements -= variable
-        val dependentVariables = (variable as? RealVariable)?.dependentVariables
-        dependentVariables?.forEach {
+        val realVariable = variable as? RealVariable
+        realVariable?.forEachTransitiveDependentVariable {
             flow.logicStatements -= it
         }
         var newLogicStatements = flow.logicStatements
@@ -336,7 +336,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
                 if (implicationVariable == variable) {
                     implicationsToDelete += implication
                 }
-                dependentVariables?.forEach {
+                realVariable?.forEachTransitiveDependentVariable {
                     if (implicationVariable == it) {
                         implicationsToDelete += implication
                     }
@@ -363,6 +363,13 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
             } else {
                 flow.backwardsAliasMap.put(existedAlias, updatedBackwardsAliasList)
             }
+        }
+    }
+
+    private fun RealVariable.forEachTransitiveDependentVariable(action: (RealVariable) -> Unit) {
+        dependentVariables.forEach {
+            it.forEachTransitiveDependentVariable(action)
+            action(it)
         }
     }
 
