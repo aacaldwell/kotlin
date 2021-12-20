@@ -52,6 +52,7 @@ val CompilerOutputKind.isCache: Boolean
 
 internal fun llvmIrDumpCallback(state: ActionState, module: IrModuleFragment, context: Context) {
     module.let{}
+    println(state.phase.name)
     if (state.beforeOrAfter == BeforeOrAfter.AFTER && state.phase.name in context.configuration.getList(KonanConfigKeys.SAVE_LLVM_IR)) {
         val moduleName: String = memScoped {
             val sizeVar = alloc<size_tVar>()

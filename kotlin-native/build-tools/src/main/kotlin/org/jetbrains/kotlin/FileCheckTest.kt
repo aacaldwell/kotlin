@@ -62,6 +62,13 @@ open class FileCheckTest : DefaultTask() {
     var checkPrefix: String? = null
 
     /**
+     * What prefix should checked for pattern instead of default CHECK?
+     */
+    @Input
+    @Optional
+    var phaseToCheck: String? = null
+
+    /**
      * Should we generate framework instead of an executable?
      * This option is useful for, well, checking framework-specific code.
      */

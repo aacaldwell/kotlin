@@ -5971,7 +5971,12 @@ Task fileCheckTest(String name, Closure<FileCheckTest> configureClosure) {
                         srcFiles task.annotatedSource
                         baseDir "$testOutputFileCheck/$name"
                         extraOpts project.globalTestArgs
-                        extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target", "-Xsave-llvm-ir"
+                        extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target"
+                        if (task.phaseToCheck != null) {
+                            extraOpts "-Xsave-llvm-ir-after=${task.phaseToCheck}"
+                        } else {
+                            extraOpts "-Xsave-llvm-ir"
+                        }
                         if (lib != null) {
                             libraries {
                                 artifact lib
@@ -5984,7 +5989,12 @@ Task fileCheckTest(String name, Closure<FileCheckTest> configureClosure) {
                         srcFiles task.annotatedSource
                         baseDir "$testOutputFileCheck/$name"
                         extraOpts project.globalTestArgs
-                        extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target", "-Xsave-llvm-ir", "-Xmeaningful-bridge-names"
+                        extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target", "-Xmeaningful-bridge-names"
+                        if (task.phaseToCheck != null) {
+                            extraOpts "-Xsave-llvm-ir-after=${task.phaseToCheck}"
+                        } else {
+                            extraOpts "-Xsave-llvm-ir"
+                        }
                         if (lib != null) {
                             libraries {
                                 artifact lib
@@ -6032,6 +6042,12 @@ fileCheckTest("filecheck_bce") {
 
 fileCheckTest("filecheck_adopted_function_reference") {
     annotatedSource = project.file('filecheck/adopted_function_reference.kt')
+}
+
+fileCheckTest("filecheck_single_tls_load") {
+    enabled = isExperimentalMM && project.globalTestArgs.contains("-opt")
+    annotatedSource = project.file('filecheck/single_tls_load.kt')
+    phaseToCheck = "OptimizeTLSDataLoads"
 }
 
 fileCheckTest("filecheck_signext_zeroext0") {
