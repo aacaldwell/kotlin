@@ -471,11 +471,11 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     }
 
     fun exitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall) {
+        val node = graphBuilder.exitEqualityOperatorCall(equalityOperatorCall).mergeIncomingFlow()
+        val operation = equalityOperatorCall.operation
         val leftOperand = equalityOperatorCall.arguments[0]
         val rightOperand = equalityOperatorCall.arguments[1]
 
-        val node = graphBuilder.exitEqualityOperatorCall(equalityOperatorCall).mergeIncomingFlow()
-        val operation = equalityOperatorCall.operation
         val leftConst = leftOperand as? FirConstExpression<*>
         val rightConst = rightOperand as? FirConstExpression<*>
         val leftIsNullConst = leftConst?.kind == ConstantValueKind.Null
