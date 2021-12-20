@@ -258,6 +258,9 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-Xsave-llvm-ir", description = "Save result of Kotlin IR to LLVM IR translation to the temporary files directory.")
     var saveLlvmIr: Boolean = false
 
+    @Argument(value = "-Xsave-llvm-ir-after", description = "Save result of Kotlin IR to LLVM IR translation to the temporary files directory.")
+    var saveLlvmIrAfter: Array<String> = emptyArray()
+
     @Argument(value = "-Xverify-bitcode", deprecatedName = "--verify_bitcode", description = "Verify llvm bitcode after each method")
     var verifyBitCode: Boolean = false
 
