@@ -1,4 +1,4 @@
-// FREE_COMPILER_ARGS: -opt -verbose
+// FREE_COMPILER_ARGS: -Werror -verbose
 
 import kotlin.test.*
 
