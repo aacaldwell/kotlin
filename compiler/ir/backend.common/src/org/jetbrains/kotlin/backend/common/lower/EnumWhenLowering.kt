@@ -94,23 +94,22 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
         subject: IrVariable,
         subjectOrdinalProvider: Lazy<IrVariable>
     ): IrExpression =
-        when {
-            irExpression is IrCall -> {
+        when (irExpression) {
+            is IrCall -> {
                 // Single entry clause:
                 //  when (subject) {
                 //      ENUM_ENTRY -> ...
                 //  }
                 transformEnumEquals(irExpression, subject, subjectOrdinalProvider)
             }
-            irExpression is IrWhen && irExpression.origin == IrStatementOrigin.WHEN_COMMA -> {
+            is IrWhen -> {
                 // Multiple entry clause:
                 //  when (subject) {
                 //      ENUM_ENTRY_1, ENUM_ENTRY_2, ..., ENUM_ENTRY_N -> ...
                 //  }
                 transformBranches(irExpression, subject, subjectOrdinalProvider)
             }
-            else ->
-                irExpression
+            else -> irExpression
         }
 
     private fun transformEnumEquals(
