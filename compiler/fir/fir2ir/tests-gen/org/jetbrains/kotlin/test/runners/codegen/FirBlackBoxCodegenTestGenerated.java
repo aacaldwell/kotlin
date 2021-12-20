@@ -47839,6 +47839,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("kt50258.kt")
+            public void testKt50258() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/kt50258.kt");
+            }
+
+            @Test
             @TestMetadata("manyWhensWithinClass.kt")
             public void testManyWhensWithinClass() throws Exception {
                 runTest("compiler/testData/codegen/box/when/enumOptimization/manyWhensWithinClass.kt");
