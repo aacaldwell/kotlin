@@ -32871,6 +32871,18 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("nestedWhenInCondition.kt")
+            public void testNestedWhenInCondition() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInCondition.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedWhenInResult.kt")
+            public void testNestedWhenInResult() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInResult.kt");
+            }
+
+            @Test
             @TestMetadata("nonConstantEnum.kt")
             public void testNonConstantEnum() throws Exception {
                 runTest("compiler/testData/codegen/box/when/enumOptimization/nonConstantEnum.kt");

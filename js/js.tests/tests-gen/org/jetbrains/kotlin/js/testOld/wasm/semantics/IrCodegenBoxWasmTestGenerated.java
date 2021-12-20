@@ -27532,6 +27532,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 runTest("compiler/testData/codegen/box/when/enumOptimization/manyWhensWithinClass.kt");
             }
 
+            @TestMetadata("nestedWhenInCondition.kt")
+            public void testNestedWhenInCondition() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInCondition.kt");
+            }
+
+            @TestMetadata("nestedWhenInResult.kt")
+            public void testNestedWhenInResult() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInResult.kt");
+            }
+
             @TestMetadata("nonConstantEnum.kt")
             public void testNonConstantEnum() throws Exception {
                 runTest("compiler/testData/codegen/box/when/enumOptimization/nonConstantEnum.kt");

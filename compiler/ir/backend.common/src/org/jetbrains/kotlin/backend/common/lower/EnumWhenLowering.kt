@@ -41,22 +41,24 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
     }
 
     override fun visitBlock(expression: IrBlock): IrExpression {
+        expression.transformChildrenVoid()
+
         // NB: See BranchingExpressionGenerator to get insight about `when` block translation to IR.
         if (expression.origin != IrStatementOrigin.WHEN) {
-            return super.visitBlock(expression)
+            return expression
         }
         // when-block with subject should have two children: temporary variable and when itself.
         if (expression.statements.size != 2) {
-            return super.visitBlock(expression)
+            return expression
         }
         val subject = expression.statements[0] as? IrVariable
-            ?: return super.visitBlock(expression)
+            ?: return expression
         val subjectClass = subject.type.getClass()
         if (subjectClass == null || subjectClass.kind != ClassKind.ENUM_CLASS || subjectClass.isEffectivelyExternal()) {
-            return super.visitBlock(expression)
+            return expression
         }
         val irWhen = expression.statements[1] as? IrWhen
-            ?: return super.visitBlock(expression)
+            ?: return expression
 
         // Will be initialized only when we found a branch that compares
         // subject with compile-time known enum entry.
@@ -74,7 +76,7 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
 
         transformBranches(irWhen, subject, subjectOrdinalProvider)
 
-        return expression.apply { transformChildrenVoid() }
+        return expression
     }
 
     private fun transformBranches(
@@ -119,7 +121,7 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
     ): IrExpression {
         // We are looking for branch that is a comparison of the subject and another enum entry.
         if (expression.symbol != context.irBuiltIns.eqeqSymbol) {
-            return super.visitCall(expression)
+            return expression
         }
         val lhs = expression.getValueArgument(0)!!
         val rhs = expression.getValueArgument(1)!!
@@ -129,7 +131,7 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
             rhs is IrGetValue && rhs.symbol.owner == subject ->
                 lhs
             else ->
-                return super.visitCall(expression)
+                return expression
         }
         val entryOrdinal = when {
             other is IrGetEnumValue && subject.type.classifierOrNull?.owner == other.symbol.owner.parent ->
@@ -137,7 +139,7 @@ open class EnumWhenLowering(protected val context: CommonBackendContext) : IrEle
             other.isNullConst() ->
                 -1
             else ->
-                return super.visitCall(expression)
+                return expression
         }
         val subjectOrdinal = subjectOrdinalProvider.value
         return IrCallImpl(
